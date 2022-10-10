@@ -5,8 +5,9 @@ import { readFile } from 'fs/promises'
 import ExcelJS from 'exceljs'
 import os from 'os'
 import { event } from 'quasar';
-import { default as summarizeData }from './handlers/summarizeData.js'
+import { default as summarizeData } from './handlers/summarizeData.js'
 import { loadXlsx } from './handlers/loadXlsx.js'
+import getThemeMode from './handlers/getThemeMode.js';
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -19,7 +20,7 @@ try {
 
 let mainWindow
 
-if(os.release().split('.')[2] >= 22000) {
+if (os.release().split('.')[2] >= 22000) {
   app.commandLine.appendSwitch("enable-transparent-visuals");
 }
 
@@ -27,8 +28,8 @@ function createWindow() {
   /**
    * Initial window options
    */
-  if(os.release().split('.')[2] >= 22000) {
-  mainWindow = new MicaBrowserWindow({
+  if (os.release().split('.')[2] >= 22000) {
+    mainWindow = new MicaBrowserWindow({
       icon: path.resolve(__dirname, 'icons/icon.png'), // tray icon
       width: 1000,
       height: 600,
@@ -62,7 +63,7 @@ function createWindow() {
       }
     })
   }
-  
+
   mainWindow.loadURL(process.env.APP_URL)
 
   if (process.env.DEBUGGING) {
@@ -94,79 +95,13 @@ app.on('activate', () => {
   }
 })
 
-summarizeData(); // basically just call the funtion/s
+loadXlsx(path);
+//summarizeData(); // basically just call the funtion/s
 
-loadXlsx(); //
 
-/*
-ipcMain.handle('loadXlsx', async (event, path) => {
-  let excelFile = await readFile(path).catch(err => console.log(err))
-  const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(excelFile);
-
-  let players = [];
-  // Initialize Players
-  let playWorksheet = workbook.getWorksheet("Jojo Bettors")
-  if(!playWorksheet) { return { error: "Missing Jojo Bettors Worksheet", errorType: "error"} }
-  playWorksheet.eachRow(row => {
-    if (row._cells[0].value === null) return
-    players.push({
-      name: row._cells[0].value,
-      tong: row._cells[1].value,
-      comm: row._cells[2].value,
-      bets: []
-    })
-  })
-
-  let dayWorksheets = [];
-  let daysRegex = /\b((mon|tue|wed(nes)?|thu(rs)?|fri|sat(ur)?|sun)(day)?)\b/gi
-  workbook.eachSheet((sheet, id) => {
-    if (sheet.name.match(daysRegex)) dayWorksheets.push(workbook.getWorksheet(id))
-  })
-
-  dayWorksheets.forEach(sheet => {
-    let playerRow = sheet.getRow(1).values;
-    playerRow = playerRow.filter((value, index) => {
-      if (value.formula?.includes("Jojo Bettors")) {
-        value.index = index
-        return value
-      }
-    })
-    playerRow.forEach(p => {
-      players.forEach(player => {
-        if (p.result === player.name) {
-          let column = sheet.getColumn(p.index)
-          column.eachCell((cell, rowNum) => {
-            if (typeof (cell.value) == "number") {
-              let bet = {};
-              bet.day = sheet.name
-              bet.amount = cell.value;
-              // console.log(sheet.getRow(rowNum).getCell(1).value)
-              if (sheet.getRow(rowNum).getCell(1).value.match(/under/gi)) {
-                bet.team = `${sheet.getRow(rowNum - 2).getCell(1).value} / ${sheet.getRow(rowNum).getCell(1).value.toUpperCase()}`
-              }
-              else if (sheet.getRow(rowNum).getCell(1).value.match(/over/gi)) {
-                bet.team = `${sheet.getRow(rowNum - 3).getCell(1).value} / ${sheet.getRow(rowNum).getCell(1).value.toUpperCase()}`
-              }
-              else {
-                bet.team = sheet.getRow(rowNum).getCell(1).value
-              }
-              bet.result = sheet.getRow(rowNum).getCell(3).value
-              player.bets.push(bet)
-            }
-          })
-        }
-      })
-    })
-  })
-  console.log(`Loaded ${players.length} players`)
-  return players
+ipcMain.handle('getThemeMode', async (event) => {
+  return nativeTheme.shouldUseDarkColors
 })
-*/
-
-// ipcMain.handle('getThemeMode', async (event) => {
-//   return nativeTheme.shouldUseDarkColors
-// })
 
 // ipcMain.handle('summarizeData', async (event, data) => {
 //   data.forEach(sheet => {
