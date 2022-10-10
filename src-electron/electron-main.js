@@ -63,7 +63,6 @@ function createWindow() {
       }
     })
   }
-
   mainWindow.loadURL(process.env.APP_URL)
 
   if (process.env.DEBUGGING) {
@@ -79,6 +78,13 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  nativeTheme.on("updated", () => {
+    mainWindow.webContents.send('theme-changed', nativeTheme.shouldUseDarkColors)
+  })
+
+
+
 }
 
 app.whenReady().then(createWindow)
@@ -95,8 +101,15 @@ app.on('activate', () => {
   }
 })
 
+ipcMain.handle('getThemeMode', async (event, arg) => {
+  return nativeTheme.shouldUseDarkColors;
+})
+ipcMain.handle('isMica', async (event, arg) => {
+  return os.release().split('.')[2] >= 22000;
+})
+
 loadXlsx(path);
-//summarizeData(); // basically just call the funtion/s
+summarizeData(); // basically just call the funtion/s
 
 
 ipcMain.handle('getThemeMode', async (event) => {
