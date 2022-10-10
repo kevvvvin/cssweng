@@ -109,12 +109,7 @@ ipcMain.handle('isMica', async (event, arg) => {
 })
 
 loadXlsx(path);
-summarizeData(); // basically just call the funtion/s
-
-
-ipcMain.handle('getThemeMode', async (event) => {
-  return nativeTheme.shouldUseDarkColors
-})
+//summarizeData(); // basically just call the funtion/s
 
 // ipcMain.handle('summarizeData', async (event, data) => {
 //   data.forEach(sheet => {

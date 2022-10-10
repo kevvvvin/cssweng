@@ -1,69 +1,9 @@
 import { ipcMain } from "electron";
 import { readFile } from "fs/promises";
-
-/*function loadPlayers(workbook, players) {
-  //let players = [];
-  // Initialize Players
-  let playWorksheet = workbook.getWorksheet("Jojo Bettors")
-  if (!playWorksheet) { return { error: "Missing Jojo Bettors Worksheet", errorType: "error" } }
-  playWorksheet.eachRow(row => {
-    if (row._cells[0].value === null) return
-    players.push({
-      name: row._cells[0].value,
-      tong: row._cells[1].value,
-      comm: row._cells[2].value,
-      bets: []
-    })
-  })
-}
-
-function loadDays(workbook, players) {
-  let dayWorksheets = [];
-  let daysRegex = /\b((mon|tue|wed(nes)?|thu(rs)?|fri|sat(ur)?|sun)(day)?)\b/gi
-  workbook.eachSheet((sheet, id) => {
-    if (sheet.name.match(daysRegex)) dayWorksheets.push(workbook.getWorksheet(id))
-  })
-
-  dayWorksheets.forEach(sheet => {
-    let playerRow = sheet.getRow(1).values;
-    playerRow = playerRow.filter((value, index) => {
-      if (value.formula?.includes("Jojo Bettors")) {
-        value.index = index
-        return value
-      }
-    })
-    playerRow.forEach(p => {
-      players.forEach(player => {
-        if (p.result === player.name) {
-          let column = sheet.getColumn(p.index)
-          column.eachCell((cell, rowNum) => {
-            if (typeof (cell.value) == "number") {
-              let bet = {};
-              bet.day = sheet.name
-              bet.amount = cell.value;
-              // console.log(sheet.getRow(rowNum).getCell(1).value)
-              if (sheet.getRow(rowNum).getCell(1).value.match(/under/gi)) {
-                bet.team = `${sheet.getRow(rowNum - 2).getCell(1).value} / ${sheet.getRow(rowNum).getCell(1).value.toUpperCase()}`
-              }
-              else if (sheet.getRow(rowNum).getCell(1).value.match(/over/gi)) {
-                bet.team = `${sheet.getRow(rowNum - 3).getCell(1).value} / ${sheet.getRow(rowNum).getCell(1).value.toUpperCase()}`
-              }
-              else {
-                bet.team = sheet.getRow(rowNum).getCell(1).value
-              }
-              bet.result = sheet.getRow(rowNum).getCell(3).value
-              player.bets.push(bet)
-            }
-          })
-        }
-      })
-    })
-  })
-}
-*/
+import ExcelJS from "exceljs";
 
 // Initialize Players
-function loadPlayers(workbook) {
+async function loadPlayers(workbook) {
   let players = [];
   let playWorksheet = workbook.getWorksheet("Jojo Bettors")
 
@@ -82,9 +22,9 @@ function loadPlayers(workbook) {
 }
 
 //Loading player bet data
-function loadPlayerData(players) {
+async function loadPlayerData(players) {
 
-  let dayWorksheets = loadDays(wb)
+  let dayWorksheets = await loadDays(wb)
 
   dayWorksheets.forEach(sheet => {
     //Get 1st row headers and get only names found in Jojo Bettors sheet (formula uses data from Jojo Bettors)
@@ -131,7 +71,7 @@ function loadPlayerData(players) {
 }
 
 // Initialize days
-function loadDays(workbook) {
+async function loadDays(workbook) {
   // load player data from specific days
   let dayWorksheets = [];
   let daysRegex = /\b((mon|tue|wed(nes)?|thu(rs)?|fri|sat(ur)?|sun)(day)?)\b/gi
@@ -150,13 +90,15 @@ function loadDays(workbook) {
 export async function loadXlsx(path) {
   ipcMain.handle('loadXlsx', async (event, path) => {
     let excelFile = await readFile(path).catch(err => console.log(err))
-    const wb = new ExcelJS.Workbook();
+    //const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(excelFile);
 
-    let players = loadPlayers(wb)
+    let players = await loadPlayers(wb)
 
     console.log(`Loaded ${players.length} players`)
-    console.log(players)
-    return players
+    console.log(players[0].bets)
+    //return players
   })
 }
+
+const wb = new ExcelJS.Workbook()
